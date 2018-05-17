@@ -14,11 +14,9 @@ class RecognitionApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
         self.post_ui_setup()
 
-
     def post_ui_setup(self):
         self.loadImage.clicked.connect(self.choose_file)
         self.processImage.clicked.connect(self.process_image)
-
 
     def choose_file(self):
         directory = QtWidgets.QFileDialog.getOpenFileName(self, "Choose fingerprint source file",
