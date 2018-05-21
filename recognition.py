@@ -25,12 +25,52 @@ class Recognition:
                             1, 5, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0,
                             1, 5, 0, 0, 0, 0, 0, 0, 1, 1, 4, 0, 1, 1, 0, 0,
                             1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0]
-
+    templates_spec_dots = [[1, 0, 1,
+                              0, 1, 0,
+                              1, 0, 1],
+                             [0, 1, 0,
+                              1, 1, 1,
+                              0, 1, 0],
+                             [1, 0, 1,
+                              0, 1, 0,
+                              0, 0, 1],
+                             [1, 0, 1,
+                              0, 1, 0,
+                              0, 1, 0],
+                             [1, 0, 1,
+                              0, 1, 0,
+                              1, 0, 0],
+                             [1, 0, 0,
+                              0, 1, 1,
+                              0, 1, 0],
+                             [1, 0, 0,
+                              0, 1, 1,
+                              1, 0, 0],
+                             [0, 1, 0,
+                              0, 1, 1,
+                              0, 1, 0],
+                             [0, 1, 0,
+                              0, 1, 1,
+                              1, 0, 0],
+                             [1, 0, 0,
+                              0, 1, 0,
+                              1, 0, 1],
+                             [0, 1, 0,
+                              0, 1, 1,
+                              0, 1, 0],
+                             [1, 0, 1,
+                              0, 1, 0,
+                              0, 0, 1],
+                             [0, 1, 0,
+                              1, 1, 1,
+                              0, 0, 0]
+                             ]
     def __init__(self, path_to_image):
         self.path_to_image = path_to_image
         self.path_without_ext = self.cut_ext_from_file()
         self.new_path = self.binarization()
         self.skeletization()
+        self.find_special_dots()
 
     def cut_ext_from_file(self):
         path_img = str(self.path_to_image)
@@ -141,6 +181,60 @@ class Recognition:
         able_to_delete_array.append(p9)
         return able_to_delete_array, total_black_count
 
+
+    # Find special dots
+    # Here we also need to use templates to find ending of line, or other
+        # special fingerprint points
+
+    def find_special_dots(self):
+        all_spec_dots = []
+        curr_dot_info = []
+        source_bin_image = Image.open(self.path_without_ext + '-skl.png')
+        self.source_image_array = np.asarray(source_bin_image)
+        self.source_image_array = np.invert(source_bin_image).tolist()
+        arr_width = len(self.source_image_array[0])
+        arr_heigth = len(self.source_image_array)
+        for i in range(1, arr_width - 1):
+            for j in range(1, arr_heigth - 1):
+                current_pixel_near = self.check_pixel_near_pos(i, j)
+                for template in self.templates_spec_dots:
+                    if current_pixel_near == template:
+                        curr_dot_info.append(i)
+                        curr_dot_info.append(j)
+                        curr_dot_info.append(self.templates_spec_dots.index(template))
+                        all_spec_dots.append(curr_dot_info)
+                        curr_dot_info = []
+                        break
+        self.write_all_data_to_file(all_spec_dots)
+        return all_spec_dots
+
+    def check_pixel_near_pos(self, x, y):
+        arr_of_near_pixels =[]
+        # Here we need to get all near pixels
+        # P1 P2 P3
+        # P4 x P5
+        # P7 P8 P9
+        arr_of_near_pixels.append(self.source_image_array[y - 1][x - 1])
+        arr_of_near_pixels.append(self.source_image_array[y - 1][x])
+        arr_of_near_pixels.append(self.source_image_array[y - 1][x + 1])
+        arr_of_near_pixels.append(self.source_image_array[y][x - 1])
+        arr_of_near_pixels.append(self.source_image_array[y][x])
+        arr_of_near_pixels.append(self.source_image_array[y][x + 1])
+        arr_of_near_pixels.append(self.source_image_array[y + 1][x - 1])
+        arr_of_near_pixels.append(self.source_image_array[y + 1][x])
+        arr_of_near_pixels.append(self.source_image_array[y + 1][x + 1])
+        return arr_of_near_pixels
+
+    def write_all_data_to_file(self, arr_of_info):
+        name_of_file = self.path_without_ext[self.path_without_ext.rfind('/'):]
+        f = open(self.path_without_ext + '-info.txt', "w+", encoding='utf8')
+        for dot in arr_of_info:
+            f.write(str(dot) + '\n')
+
 example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/fingerprint-db/ex2.png'
 example_path_2 = 'C:/Users/Glathor/Desktop/421/diploma/fingerprint-db/3.jpg'
-N = Recognition(example_path_2)
+example_path_3 = 'D:/gleb/diploma/fingerprint-recognition-main/fingerprint-db' \
+                 '/1.jpg'
+
+N = Recognition(example_path_3)
+
