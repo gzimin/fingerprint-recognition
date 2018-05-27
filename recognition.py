@@ -6,8 +6,8 @@ class Recognition:
     # for skeletization
     # template array for the value of the neighborhood estimate
     h = [[128, 64, 32],
-        [16, 0, 8],
-        [4, 2, 1]]
+         [16, 0, 8],
+         [4, 2, 1]]
 
     array_table_of_rules = [1, 0, 0, 3, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1,
                             0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
@@ -66,8 +66,8 @@ class Recognition:
                               1, 1, 1,
                               0, 0, 0]]
     templates_spec_dots_2 = [[1, 0, 0,
-                             0, 1, 0,
-                             0, 0, 0],
+                              0, 1, 0,
+                              0, 0, 0],
                              [0, 1, 0,
                               0, 1, 0,
                               0, 0, 0],
@@ -90,7 +90,7 @@ class Recognition:
         self.path_to_image = path_to_image
         self.path_without_ext = self.cut_ext_from_file()
         self.new_path = self.binarization()
-        self.skeletization()
+        # self.skeletization()
         self.find_special_dots()
 
     def cut_ext_from_file(self):
@@ -224,7 +224,6 @@ class Recognition:
                     if self.source_image_array[j][i]:
                         continue
 
-
     def check_near_dots_01_sequence(self, x, y):
         all_pixels, total_black_count = self.calc_near_pixels(x, y)
         all_pixels.pop(-1)
@@ -344,8 +343,8 @@ class Recognition:
         return able_to_delete_array, total_black_count
 
 
-    # Find special dots
-    # Here we also need to use templates to find ending of line, or other
+        # Find special dots
+        # Here we also need to use templates to find ending of line, or other
         # special fingerprint points
 
     def find_special_dots(self):
@@ -363,10 +362,13 @@ class Recognition:
                 current_pixel_near = self.check_pixel_near_pos(i, j)
                 if current_pixel_near in self.templates_spec_dots_4:
                     point_spec = 4
+                    self.source_image_array[j][i] = (0, 0, 255)
                 elif current_pixel_near in self.templates_spec_dots_3:
-                    point_spec = 3
-                # elif current_pixel_near in self.templates_spec_dots_2:
-                #     point_spec = 2
+                    if self.check_for_false_spec_dots(i, j, current_pixel_near):
+                        point_spec = 3
+                        self.source_image_array[j][i] = (0, 255, 0)
+                    else:
+                        continue
                 if point_spec != 0:
                     curr_dot_info.append(i)
                     curr_dot_info.append(j)
@@ -375,7 +377,20 @@ class Recognition:
                     point_spec = 0
                     break
         self.write_all_data_to_file(all_spec_dots)
+        to_save_image = Image.new('RGB', (arr_width, arr_heigth))
+        pixels = to_save_image.load()
+        for i in range(1, arr_width - 1):
+            for j in range(1, arr_heigth - 1):
+                if self.source_image_array[j][i] is bool:
+                    if self.source_image_array[j][i]:
+                        pixels[i, j] = (0, 0, 0)
+                    else:
+                        pixels[i, j] = (255, 255, 255)
+                else:
+                    pixels[i, j] = self.source_image_array[j][i]
+        to_save_image.save(self.path_without_ext + '-colored.png')
         return all_spec_dots
+
 
     def check_for_noise_spec_dots(self, all_near_dots):
         noise_template = [[1, 1, 1, 1, 0, 1, 1, 1, 1],
@@ -399,6 +414,66 @@ class Recognition:
             return True
         return False
 
+    def check_for_false_spec_dots(self, x, y, near_dots):
+        for i in range(len(near_dots)):
+            if near_dots[i]:
+                if i == 0:
+                    if self.source_image_array[y - 2][x - 2] or \
+                        self.source_image_array[y - 2][x - 1] or \
+                            self.source_image_array[y - 1][x - 2]:
+                        return True
+                    else:
+                        self.source_image_array[y - 1][x - 1] = False
+                elif i == 1:
+                    if self.source_image_array[y - 2][x - 1] or \
+                        self.source_image_array[y - 2][x] or \
+                            self.source_image_array[y - 2][x + 1]:
+                        return True
+                    else:
+                        self.source_image_array[y - 1][x] = False
+                elif i == 2:
+                    if self.source_image_array[y - 2][x + 1] or \
+                        self.source_image_array[y - 2][x + 2] or \
+                            self.source_image_array[y - 1][x + 2]:
+                        return True
+                    else:
+                        self.source_image_array[y - 1][x + 1] = False
+                elif i == 3:
+                    if self.source_image_array[y - 1][x - 2] or \
+                        self.source_image_array[y - 2][x] or \
+                            self.source_image_array[y + 1][x - 2]:
+                        return True
+                    else:
+                        self.source_image_array[y][x - 1] = False
+                elif i == 5:
+                    if self.source_image_array[y - 1][x + 2] or \
+                        self.source_image_array[y][x + 2] or \
+                            self.source_image_array[y + 1][x + 2]:
+                        return True
+                    else:
+                        self.source_image_array[y][x + 1] = False
+                elif i == 6:
+                    if self.source_image_array[y + 1][x - 2] or \
+                            self.source_image_array[y - 2][x - 2] or \
+                            self.source_image_array[y - 2][x + 1]:
+                        return True
+                    else:
+                        self.source_image_array[y - 1][x - 1] = False
+                elif i == 7:
+                    if self.source_image_array[y - 2][x - 1] or \
+                            self.source_image_array[y - 2][x] or \
+                            self.source_image_array[y - 2][x + 1]:
+                        return True
+                    else:
+                        self.source_image_array[y + 1][x] = False
+                elif i == 8:
+                    if self.source_image_array[y + 1][x + 2] or \
+                            self.source_image_array[y + 2][x + 1] or \
+                            self.source_image_array[y + 2][x + 2]:
+                        return True
+                    else:
+                        self.source_image_array[y + 1][x + 1] = False
+                return False
 
     def check_pixel_near_pos(self, x, y):
         arr_of_near_pixels =[]
@@ -417,17 +492,20 @@ class Recognition:
         arr_of_near_pixels.append(self.source_image_array[y + 1][x + 1])
         return arr_of_near_pixels
 
+
     def write_all_data_to_file(self, arr_of_info):
         name_of_file = self.path_without_ext[self.path_without_ext.rfind('/'):]
         f = open(self.path_without_ext + '-info.txt', "w+", encoding='utf8')
         for dot in arr_of_info:
             f.write(str(dot) + '\n')
 
-example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/fingerprint-db/ex2.png'
+example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/' \
+               'fingerprint-db/ex2.png'
 example_path_2 = 'C:/Users/Glathor/Desktop/421/diploma/fingerprint-db/3.jpg'
 example_path_3 = 'D:/gleb/diploma/fingerprint-recognition-main/fingerprint-db' \
-                 '/1.jpg'
-example_path_4 = "C:/Users/Student/Desktop/fingerprint-recognition/fingerprint-db/5.jpg"
+                 '/5.jpg'
+example_path_4 = "C:/Users/Student/Desktop/fingerprint-recognition" \
+                 "/fingerprint-db/6.jpg"
 
-N = Recognition(example_path_4)
+N = Recognition(example_path_3)
 
