@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-
+import pickle
 
 class Recognition:
     # for skeletization
@@ -8,7 +8,8 @@ class Recognition:
     h = [[128, 64, 32],
          [16, 0, 8],
          [4, 2, 1]]
-
+    current_count_of_fingerprints = 9
+    maximum_fault_percent = 60
     array_table_of_rules = [1, 0, 0, 3, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1,
                             0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
                             0, 5, 0, 0, 0, 0, 0, 5, 1, 1, 0, 3, 1, 1, 1, 1,
@@ -56,15 +57,25 @@ class Recognition:
                              [1, 0, 0,
                               0, 1, 0,
                               1, 0, 1],
-                             [0, 1, 0,
-                              0, 1, 1,
-                              0, 1, 0],
                              [1, 0, 1,
                               0, 1, 0,
                               0, 0, 1],
                              [0, 1, 0,
                               1, 1, 1,
-                              0, 0, 0]]
+                              0, 0, 0],
+                             [0, 0, 1,
+                              0, 1, 0,
+                              1, 0, 1],
+                             [0, 0, 1,
+                              1, 1, 0,
+                              0, 0, 1],
+                             [0, 0, 0,
+                              1, 1, 1,
+                              0, 1, 0],
+                             [0, 1, 0,
+                              1, 1, 0,
+                              0, 1, 0],
+                             ]
     templates_spec_dots_2 = [[1, 0, 0,
                               0, 1, 0,
                               0, 0, 0],
@@ -86,12 +97,14 @@ class Recognition:
                              [0, 0, 0,
                               0, 1, 0,
                               1, 0, 0]]
+
     def __init__(self, path_to_image):
         self.path_to_image = path_to_image
         self.path_without_ext = self.cut_ext_from_file()
         self.new_path = self.binarization()
-        # self.skeletization()
+        self.skeletization()
         self.find_special_dots()
+        self.compare_with_db()
 
     def cut_ext_from_file(self):
         path_img = str(self.path_to_image)
@@ -176,40 +189,6 @@ class Recognition:
         to_save_img.save(self.path_without_ext + '-skl.png')
 
     def delete_noise_from_skelet_image(self):
-        templates_spec_dots_3 = [[1, 0, 1,
-                                  0, 1, 0,
-                                  0, 0, 1],
-                                 [1, 0, 1,
-                                  0, 1, 0,
-                                  0, 1, 0],
-                                 [1, 0, 1,
-                                  0, 1, 0,
-                                  1, 0, 0],
-                                 [1, 0, 0,
-                                  0, 1, 1,
-                                  0, 1, 0],
-                                 [1, 0, 0,
-                                  0, 1, 1,
-                                  1, 0, 0],
-                                 [0, 1, 0,
-                                  0, 1, 1,
-                                  0, 1, 0],
-                                 [0, 1, 0,
-                                  0, 1, 1,
-                                  1, 0, 0],
-                                 [1, 0, 0,
-                                  0, 1, 0,
-                                  1, 0, 1],
-                                 [0, 1, 0,
-                                  0, 1, 1,
-                                  0, 1, 0],
-                                 [1, 0, 1,
-                                  0, 1, 0,
-                                  0, 0, 1],
-                                 [0, 1, 0,
-                                  1, 1, 1,
-                                  0, 0, 0]]
-
         arr_width = len(self.source_image_array[0])
         arr_heigth = len(self.source_image_array)
         count_lap = 0
@@ -359,6 +338,8 @@ class Recognition:
         print("*** Find special dots process started ***")
         for i in range(1, arr_width - 1):
             for j in range(1, arr_heigth - 1):
+                if i == 76 and j == 418:
+                    print("something")
                 current_pixel_near = self.check_pixel_near_pos(i, j)
                 if current_pixel_near in self.templates_spec_dots_4:
                     point_spec = 4
@@ -369,6 +350,9 @@ class Recognition:
                         self.source_image_array[j][i] = (0, 255, 0)
                     else:
                         continue
+                elif current_pixel_near in self.templates_spec_dots_2:
+                    point_spec = 2
+                    self.source_image_array[j][i] = (255, 255, 0)
                 if point_spec != 0:
                     curr_dot_info.append(i)
                     curr_dot_info.append(j)
@@ -379,9 +363,9 @@ class Recognition:
         self.write_all_data_to_file(all_spec_dots)
         to_save_image = Image.new('RGB', (arr_width, arr_heigth))
         pixels = to_save_image.load()
-        for i in range(1, arr_width - 1):
-            for j in range(1, arr_heigth - 1):
-                if self.source_image_array[j][i] is bool:
+        for i in range(2, arr_width - 1):
+            for j in range(2, arr_heigth - 1):
+                if type(self.source_image_array[j][i]) is bool:
                     if self.source_image_array[j][i]:
                         pixels[i, j] = (0, 0, 0)
                     else:
@@ -390,7 +374,6 @@ class Recognition:
                     pixels[i, j] = self.source_image_array[j][i]
         to_save_image.save(self.path_without_ext + '-colored.png')
         return all_spec_dots
-
 
     def check_for_noise_spec_dots(self, all_near_dots):
         noise_template = [[1, 1, 1, 1, 0, 1, 1, 1, 1],
@@ -415,6 +398,7 @@ class Recognition:
         return False
 
     def check_for_false_spec_dots(self, x, y, near_dots):
+
         for i in range(len(near_dots)):
             if near_dots[i]:
                 if i == 0:
@@ -495,17 +479,34 @@ class Recognition:
 
     def write_all_data_to_file(self, arr_of_info):
         name_of_file = self.path_without_ext[self.path_without_ext.rfind('/'):]
-        f = open(self.path_without_ext + '-info.txt', "w+", encoding='utf8')
-        for dot in arr_of_info:
-            f.write(str(dot) + '\n')
+        f = open(self.path_without_ext + '-info.txt', "wb")
+        pickle.dump(arr_of_info, f)
+
+    def compare_with_db(self):
+        path_to_fingerprint_info = self.path_without_ext + '-info.txt'
+        current_index_of_fingerprint = int(self.path_without_ext[-1])
+        all_files_db = []
+        for i in range(1, self.current_count_of_fingerprints):
+            path_to_file = self.path_without_ext[-1] + str(i) + 'info.txt'
+            with open(path_to_file, 'rb') as fp:
+                itemlist = pickle.load(fp)
+                all_files_db.append(itemlist)
+        with open(path_to_fingerprint_info, 'rb') as fp:
+            curr_fingerprint = pickle.load(fp)
+
+
+
+
 
 example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/' \
                'fingerprint-db/ex2.png'
 example_path_2 = 'C:/Users/Glathor/Desktop/421/diploma/fingerprint-db/3.jpg'
 example_path_3 = 'D:/gleb/diploma/fingerprint-recognition-main/fingerprint-db' \
-                 '/5.jpg'
+                 '/7.jpg'
 example_path_4 = "C:/Users/Student/Desktop/fingerprint-recognition" \
                  "/fingerprint-db/6.jpg"
-
-N = Recognition(example_path_3)
+for i in range(1, 9):
+    example_path_3 = example_path_3[:-5] + str(i) + '.jpg'
+    N = Recognition(example_path_3)
+    print("*** i = {0} ***".format(i))
 

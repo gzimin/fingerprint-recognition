@@ -68,7 +68,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Finger print "
+                                                           "recognition "
+                                                           "program"))
         self.loadImage.setText(_translate("MainWindow", "Load Source Image"))
         self.processImage.setText(_translate("MainWindow", "Process a fingerprint"))
         self.pushButton.setText(_translate("MainWindow", "Recognize a fingerprint"))
