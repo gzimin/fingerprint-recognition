@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>516</width>
+    <width>793</width>
     <height>552</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -17,10 +23,10 @@
    <widget class="QPushButton" name="loadImage">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>340</x>
       <y>10</y>
-      <width>111</width>
-      <height>23</height>
+      <width>141</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
@@ -30,9 +36,9 @@
    <widget class="QPushButton" name="processImage">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>340</y>
-      <width>111</width>
+      <x>80</x>
+      <y>330</y>
+      <width>141</width>
       <height>31</height>
      </rect>
     </property>
@@ -43,8 +49,8 @@
    <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>310</x>
-      <y>340</y>
+      <x>330</x>
+      <y>330</y>
       <width>141</width>
       <height>31</height>
      </rect>
@@ -56,9 +62,9 @@
    <widget class="QLabel" name="srcInfo">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>60</y>
-      <width>111</width>
+      <x>80</x>
+      <y>70</y>
+      <width>141</width>
       <height>16</height>
      </rect>
     </property>
@@ -69,9 +75,9 @@
    <widget class="QLabel" name="reconInfo">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>60</y>
-      <width>131</width>
+      <x>310</x>
+      <y>70</y>
+      <width>151</width>
       <height>16</height>
      </rect>
     </property>
@@ -82,21 +88,21 @@
    <widget class="QLabel" name="reconInfoText">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>450</y>
-      <width>181</width>
+      <x>530</x>
+      <y>340</y>
+      <width>221</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string>Information about recognized image</string>
+     <string>Information about recognized print</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="infoAboutImage">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>380</y>
+      <x>530</x>
+      <y>370</y>
       <width>201</width>
       <height>71</height>
      </rect>
@@ -123,7 +129,7 @@ border-color: black;</string>
    <widget class="QLabel" name="procImageLabel">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>300</x>
       <y>90</y>
       <width>191</width>
       <height>231</height>
@@ -143,12 +149,43 @@ border-color: black;</string>
      <rect>
       <x>-10</x>
       <y>40</y>
-      <width>531</width>
+      <width>801</width>
       <height>20</height>
      </rect>
     </property>
     <property name="orientation">
      <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="foundImageLabel">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>90</y>
+      <width>191</width>
+      <height>231</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-style: solid;
+border-width: 1px;
+border-color: black;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="foundInfoText">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>70</y>
+      <width>151</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Founded fingerprint</string>
     </property>
    </widget>
   </widget>
@@ -157,8 +194,8 @@ border-color: black;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>516</width>
-     <height>21</height>
+     <width>793</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>

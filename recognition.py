@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import pickle
+import math
 
 class Recognition:
     # for skeletization
@@ -101,10 +102,14 @@ class Recognition:
     def __init__(self, path_to_image):
         self.path_to_image = path_to_image
         self.path_without_ext = self.cut_ext_from_file()
-        self.new_path = self.binarization()
+        self.binarization()
         self.skeletization()
         self.find_special_dots()
-        self.compare_with_db()
+        self.new_path = self.path_without_ext + '-colored.png'
+        self.result = self.compare_with_db()
+        self.final_recon_path = self.path_without_ext[:-1] + self.result[-1] \
+                                + '.jpg'
+
 
     def cut_ext_from_file(self):
         path_img = str(self.path_to_image)
@@ -136,8 +141,6 @@ class Recognition:
             replace_flag = False
             count_lap += 1
             print("Lap - {0}".format(count_lap))
-            # if count_lap >= 2:
-            #     break
             for i in range(1, arr_width - 1):
                 for j in range(1, arr_heigth - 1):
                     if self.source_image_array[j][i]:
@@ -338,8 +341,6 @@ class Recognition:
         print("*** Find special dots process started ***")
         for i in range(1, arr_width - 1):
             for j in range(1, arr_heigth - 1):
-                if i == 76 and j == 418:
-                    print("something")
                 current_pixel_near = self.check_pixel_near_pos(i, j)
                 if current_pixel_near in self.templates_spec_dots_4:
                     point_spec = 4
@@ -359,7 +360,6 @@ class Recognition:
                     all_spec_dots.append(curr_dot_info)
                     curr_dot_info = []
                     point_spec = 0
-                    break
         self.write_all_data_to_file(all_spec_dots)
         to_save_image = Image.new('RGB', (arr_width, arr_heigth))
         pixels = to_save_image.load()
@@ -398,7 +398,6 @@ class Recognition:
         return False
 
     def check_for_false_spec_dots(self, x, y, near_dots):
-
         for i in range(len(near_dots)):
             if near_dots[i]:
                 if i == 0:
@@ -476,7 +475,6 @@ class Recognition:
         arr_of_near_pixels.append(self.source_image_array[y + 1][x + 1])
         return arr_of_near_pixels
 
-
     def write_all_data_to_file(self, arr_of_info):
         name_of_file = self.path_without_ext[self.path_without_ext.rfind('/'):]
         f = open(self.path_without_ext + '-info.txt', "wb")
@@ -484,19 +482,48 @@ class Recognition:
 
     def compare_with_db(self):
         path_to_fingerprint_info = self.path_without_ext + '-info.txt'
-        current_index_of_fingerprint = int(self.path_without_ext[-1])
         all_files_db = []
         for i in range(1, self.current_count_of_fingerprints):
-            path_to_file = self.path_without_ext[-1] + str(i) + 'info.txt'
+            path_to_file = self.path_without_ext[:-1] + str(i) + '-info.txt'
             with open(path_to_file, 'rb') as fp:
-                itemlist = pickle.load(fp)
-                all_files_db.append(itemlist)
+                item_list = pickle.load(fp)
+                all_files_db.append(item_list)
         with open(path_to_fingerprint_info, 'rb') as fp:
             curr_fingerprint = pickle.load(fp)
+        for i in range(len(all_files_db)):
+            total_dots_count = min(len(curr_fingerprint), len(all_files_db[i]))
+            count_of_true_dots = 0
+            for j in range(total_dots_count):
+                if abs(curr_fingerprint[j][0] - all_files_db[i][j][0]) <= 10\
+                    and abs(curr_fingerprint[j][1] -
+                        all_files_db[i][j][1]) <= 10:
+                    count_of_true_dots += 1
+            if float(count_of_true_dots / total_dots_count) * 100 >= 60:
+                percent = float(count_of_true_dots / total_dots_count) * 100
+                print("Recognition algorithm finished")
+                print("Curr - {}".format(self.path_without_ext))
+                print("Found - {}".format(self.path_without_ext[:-1] +\
+                                          str(i + 1)))
+                print("Percent - {}".format(percent))
+                return "This is the fingerprint with number - {}".format(i + 1)
+        return "Sorry, we didn't match anything :("
+
+class RecognitionCompareMethod:
+    def __init__(self, path_to_image):
+        self.path_to_image = path_to_image
+        self.path_without_ext = self.cut_ext_from_file()
+
+    def cut_ext_from_file(self):
+        path_img = str(self.path_to_image)
+        right_dot = path_img.rfind('.')
+        return path_img[:right_dot]
 
 
-
-
+def add_all_fingerprints(count, path_to_one_file):
+    for i in range(1, count):
+        path_to_one_file = path_to_one_file[:-5] + str(i) + '.jpg'
+        N = Recognition(path_to_one_file)
+        print("*** i = {0} ***".format(i))
 
 example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/' \
                'fingerprint-db/ex2.png'
@@ -505,8 +532,6 @@ example_path_3 = 'D:/gleb/diploma/fingerprint-recognition-main/fingerprint-db' \
                  '/7.jpg'
 example_path_4 = "C:/Users/Student/Desktop/fingerprint-recognition" \
                  "/fingerprint-db/6.jpg"
-for i in range(1, 9):
-    example_path_3 = example_path_3[:-5] + str(i) + '.jpg'
-    N = Recognition(example_path_3)
-    print("*** i = {0} ***".format(i))
 
+
+# N = Recognition(example_path_3)

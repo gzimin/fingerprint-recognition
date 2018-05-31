@@ -30,17 +30,24 @@ class RecognitionApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.sourceImgLabel.setScaledContents(True)
         self.sourceImgLabel.setPixmap(file_pixmap)
 
-    def process_image(self,):
+    def process_image(self):
         if self.path_to_source_file == '':
             return
-        recon_image = recognition.Recognition(self.path_to_source_file).new_path
-        self.load_pic_to_window_rigth(recon_image)
+        reconAlgorithm = recognition.Recognition(self.path_to_source_file)
+        recon_image = reconAlgorithm.new_path
+        found_image = reconAlgorithm.final_recon_path
+        self.load_pic_to_window_right(recon_image)
+        self.load_recon_image(found_image)
 
-    def load_pic_to_window_rigth(self, recon_image_path):
+    def load_pic_to_window_right(self, recon_image_path):
         file_pixmap = QtGui.QPixmap(recon_image_path)
         self.procImageLabel.setScaledContents(True)
         self.procImageLabel.setPixmap(file_pixmap)
 
+    def load_recon_image(self, final_image_path):
+        file_pixmap = QtGui.QPixmap(final_image_path)
+        self.foundImageLabel.setScaledContents(True)
+        self.foundImageLabel.setPixmap(file_pixmap)
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
