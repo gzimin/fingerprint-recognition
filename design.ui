@@ -23,7 +23,7 @@
    <widget class="QPushButton" name="loadImage">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>310</x>
       <y>10</y>
       <width>141</width>
       <height>31</height>
@@ -36,27 +36,14 @@
    <widget class="QPushButton" name="processImage">
     <property name="geometry">
      <rect>
-      <x>80</x>
-      <y>330</y>
-      <width>141</width>
+      <x>150</x>
+      <y>360</y>
+      <width>221</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>Process a fingerprint</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>330</x>
-      <y>330</y>
-      <width>141</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Recognize a fingerprint</string>
+     <string>Process a fingerprint with method 1</string>
     </property>
    </widget>
    <widget class="QLabel" name="srcInfo">
@@ -99,12 +86,15 @@
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="infoAboutImage">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>530</x>
+      <x>510</x>
       <y>370</y>
-      <width>201</width>
-      <height>71</height>
+      <width>231</width>
+      <height>101</height>
      </rect>
     </property>
    </widget>
@@ -186,6 +176,19 @@ border-color: black;</string>
     </property>
     <property name="text">
      <string>Founded fingerprint</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="processImage_2">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>400</y>
+      <width>221</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Process a fingerprint with method 2</string>
     </property>
    </widget>
   </widget>

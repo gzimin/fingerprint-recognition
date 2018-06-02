@@ -334,8 +334,9 @@ class Recognition:
         all_spec_dots = []
         curr_dot_info = []
         source_bin_image = Image.open(self.path_without_ext + '-skl.png')
-        self.source_image_array = np.asarray(source_bin_image)
         self.source_image_array = np.invert(source_bin_image).tolist()
+        colored_image_array = np.copy(self.source_image_array)
+        colored_image_array = np.invert(colored_image_array).tolist()
         arr_width = len(self.source_image_array[0])
         arr_heigth = len(self.source_image_array)
         print("*** Find special dots process started ***")
@@ -344,19 +345,24 @@ class Recognition:
                 current_pixel_near = self.check_pixel_near_pos(i, j)
                 if current_pixel_near in self.templates_spec_dots_4:
                     point_spec = 4
-                    self.source_image_array[j][i] = (0, 0, 255)
+                    colored_image_array[j][i] = (0, 0, 255)
                 elif current_pixel_near in self.templates_spec_dots_3:
                     if self.check_for_false_spec_dots(i, j, current_pixel_near):
                         point_spec = 3
-                        self.source_image_array[j][i] = (0, 255, 0)
+                        colored_image_array[j][i] = (255, 0, 0)
                     else:
                         continue
                 elif current_pixel_near in self.templates_spec_dots_2:
                     point_spec = 2
-                    self.source_image_array[j][i] = (255, 255, 0)
+                    colored_image_array[j][i] = (0, 255, 0)
                 if point_spec != 0:
-                    curr_dot_info.append(i)
-                    curr_dot_info.append(j)
+                    for index_i in range(i - 2,i + 2):
+                        for index_j in range(j - 2, j + 2):
+                            colored_image_array[index_j][index_i] = \
+                                colored_image_array[j][i]
+                    curr_dot_info.append(float(i / arr_width))
+                    curr_dot_info.append(float(j / arr_heigth))
+                    curr_dot_info.append(point_spec)
                     all_spec_dots.append(curr_dot_info)
                     curr_dot_info = []
                     point_spec = 0
@@ -365,15 +371,16 @@ class Recognition:
         pixels = to_save_image.load()
         for i in range(2, arr_width - 1):
             for j in range(2, arr_heigth - 1):
-                if type(self.source_image_array[j][i]) is bool:
-                    if self.source_image_array[j][i]:
+                if type(colored_image_array) is bool:
+                    if colored_image_array:
                         pixels[i, j] = (0, 0, 0)
                     else:
                         pixels[i, j] = (255, 255, 255)
                 else:
-                    pixels[i, j] = self.source_image_array[j][i]
+                    pixels[i, j] = colored_image_array[j][i]
         to_save_image.save(self.path_without_ext + '-colored.png')
         return all_spec_dots
+
 
     def check_for_noise_spec_dots(self, all_near_dots):
         noise_template = [[1, 1, 1, 1, 0, 1, 1, 1, 1],
@@ -484,54 +491,116 @@ class Recognition:
         path_to_fingerprint_info = self.path_without_ext + '-info.txt'
         all_files_db = []
         for i in range(1, self.current_count_of_fingerprints):
+            if i == int(self.path_without_ext[-1]):
+                continue
             path_to_file = self.path_without_ext[:-1] + str(i) + '-info.txt'
             with open(path_to_file, 'rb') as fp:
                 item_list = pickle.load(fp)
                 all_files_db.append(item_list)
         with open(path_to_fingerprint_info, 'rb') as fp:
             curr_fingerprint = pickle.load(fp)
+        max_math_percent = 0
+        index_of_max_match = 0
         for i in range(len(all_files_db)):
             total_dots_count = min(len(curr_fingerprint), len(all_files_db[i]))
             count_of_true_dots = 0
             for j in range(total_dots_count):
-                if abs(curr_fingerprint[j][0] - all_files_db[i][j][0]) <= 10\
+                if abs(curr_fingerprint[j][0] - all_files_db[i][j][0]) <= 0.016\
                     and abs(curr_fingerprint[j][1] -
-                        all_files_db[i][j][1]) <= 10:
+                        all_files_db[i][j][1]) <= 0.016:
                     count_of_true_dots += 1
-            if float(count_of_true_dots / total_dots_count) * 100 >= 60:
-                percent = float(count_of_true_dots / total_dots_count) * 100
+            percent = float(count_of_true_dots / total_dots_count) * 100
+            if percent >= 60:
                 print("Recognition algorithm finished")
                 print("Curr - {}".format(self.path_without_ext))
                 print("Found - {}".format(self.path_without_ext[:-1] +\
                                           str(i + 1)))
                 print("Percent - {}".format(percent))
                 return "This is the fingerprint with number - {}".format(i + 1)
+            if max_math_percent <= percent:
+                max_math_percent = percent
+                index_of_max_match = i
+
+        print("Didn't find anything, the highest mark was {0},"
+              " with example - {1}".format(str(max_math_percent),
+                                           str(index_of_max_match)))
         return "Sorry, we didn't match anything :("
 
-class RecognitionCompareMethod:
-    def __init__(self, path_to_image):
-        self.path_to_image = path_to_image
-        self.path_without_ext = self.cut_ext_from_file()
+# Another method of fingerprint recognition algorithms
 
-    def cut_ext_from_file(self):
-        path_img = str(self.path_to_image)
+
+class RecognitionCompareMethod:
+    def __init__(self, path_to_image, count):
+        self.path_to_image = path_to_image
+        self.path_without_ext = self.cut_ext_from_file(path_to_image)
+        self.binarization(path_to_image)
+        self.path_to_recon_image = self.compare_fingerprints(count,
+                                                  self.path_without_ext +
+                                       '-bin.png')
+
+    def cut_ext_from_file(self, path_to_file):
+        path_img = str(path_to_file)
         right_dot = path_img.rfind('.')
         return path_img[:right_dot]
 
+    def binarization(self, path_to_file):
+        source_image = Image.open(path_to_file)
+        thresh = 150 # this is our coef. of binarizing
+        print("*** Binarization process started ***")
+        fn = lambda x: 255 if x > thresh else 0
+        r = source_image.convert('L').point(fn, mode='1')
+        new_path = self.cut_ext_from_file(path_to_file) + '-bin.png'
+        r.save(new_path)
+        return new_path
+
+    def compare_fingerprints(self, count, path_to_source_file):
+        source_bin_image = Image.open(path_to_source_file)
+        self.source_image_array = np.asarray(source_bin_image)
+        self.source_image_array = np.invert(source_bin_image).tolist()
+        arr_width = len(self.source_image_array[0])
+        arr_heigth = len(self.source_image_array)
+        for i in range(1, count + 1):
+            if i == int(self.path_without_ext[-1]):
+                continue
+            matched_pixels = 0
+            path_to_new_image = self.path_without_ext[:-1] + str(i) + '-bin.png'
+            to_compare_image = Image.open(path_to_new_image)
+            to_compare_image = to_compare_image.resize((arr_width,
+                                                        arr_heigth),
+                                                       Image.ANTIALIAS)
+            to_compare_image = np.asarray(to_compare_image)
+            to_compare_image = np.invert(to_compare_image).tolist()
+            for ind_x in range(arr_width):
+                for ind_y in range(arr_heigth):
+                    if self.source_image_array[ind_y][ind_x] == \
+                            to_compare_image[ind_y][ind_x]:
+                        matched_pixels += 1
+            matched_pixels_percent = matched_pixels / (arr_heigth *
+                                                       arr_width) * 100
+            print("Image {0} with percent of match - {1}".format(i, matched_pixels_percent))
+            if matched_pixels_percent >= 80:
+                print("We find it! With {0}% match image with id {1}".format(
+                    matched_pixels_percent, i))
+                return path_to_new_image
+        return False
 
 def add_all_fingerprints(count, path_to_one_file):
-    for i in range(1, count):
-        path_to_one_file = path_to_one_file[:-5] + str(i) + '.jpg'
-        N = Recognition(path_to_one_file)
+    for i in range(1, count + 1):
         print("*** i = {0} ***".format(i))
+        path_to_one_file = path_to_one_file[:-5] + str(i) + '.jpg'
+        Recognition(path_to_one_file)
+
 
 example_path = '/home/gleb/PycharmProjects/fingerprint-recognition/' \
                'fingerprint-db/ex2.png'
 example_path_2 = 'C:/Users/Glathor/Desktop/421/diploma/fingerprint-db/3.jpg'
 example_path_3 = 'D:/gleb/diploma/fingerprint-recognition-main/fingerprint-db' \
-                 '/7.jpg'
+                 '/8.jpg'
 example_path_4 = "C:/Users/Student/Desktop/fingerprint-recognition" \
                  "/fingerprint-db/6.jpg"
 
 
 # N = Recognition(example_path_3)
+# add_all_fingerprints(10, example_path_3)
+
+# exm = RecognitionCompareMethod(example_path_3, 10)
