@@ -537,7 +537,7 @@ class RecognitionCompareMethod:
         self.path_to_image = path_to_image
         self.path_without_ext = self.cut_ext_from_file(path_to_image)
         self.binarization(path_to_image)
-        self.path_to_recon_image = self.compare_fingerprints(count,
+        self.index_of_recon_image = self.compare_fingerprints(count,
                                                   self.path_without_ext +
                                        '-bin.png')
 
@@ -562,6 +562,7 @@ class RecognitionCompareMethod:
         self.source_image_array = np.invert(source_bin_image).tolist()
         arr_width = len(self.source_image_array[0])
         arr_heigth = len(self.source_image_array)
+        array_of_percents = []
         for i in range(1, count + 1):
             if i == int(self.path_without_ext[-1]):
                 continue
@@ -581,10 +582,13 @@ class RecognitionCompareMethod:
             matched_pixels_percent = matched_pixels / (arr_heigth *
                                                        arr_width) * 100
             print("Image {0} with percent of match - {1}".format(i, matched_pixels_percent))
-            if matched_pixels_percent >= 80:
-                print("We find it! With {0}% match image with id {1}".format(
-                    matched_pixels_percent, i))
-                return path_to_new_image
+            array_of_percents.append(matched_pixels_percent)
+        max_percent_of_matching = max(array_of_percents)
+        if max_percent_of_matching >= 80:
+            print("We find it! With {0}% match image with id {1}".format(
+                    max_percent_of_matching,
+                    array_of_percents.index(max_percent_of_matching) + 1))
+            return array_of_percents.index(max_percent_of_matching) + 1
         return False
 
 def add_all_fingerprints(count, path_to_one_file):

@@ -47,12 +47,14 @@ class RecognitionApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
             return
         recAlg = recognition.RecognitionCompareMethod(
             self.path_to_source_file, 10)
-        if not recAlg.path_to_recon_image:
+        if type(recAlg.index_of_recon_image) is bool:
             result = "Didn't found any matches"
             self.load_text_to_recon_info(result)
         else:
-            self.load_recon_image(recAlg.path_to_recon_image)
-            result = "We find it, it's - {}".format(recAlg.path_to_recon_image)
+            result = "We find it, it's image with index - {}".format(
+                recAlg.index_of_recon_image)
+            path_to_file = recAlg.path_without_ext[:-1] + result[-1] + '.jpg'
+            self.load_recon_image(path_to_file)
             self.load_text_to_recon_info(result)
 
     def load_pic_to_window_right(self, recon_image_path):
