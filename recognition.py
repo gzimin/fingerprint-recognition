@@ -379,6 +379,7 @@ class Recognition:
                 else:
                     pixels[i, j] = colored_image_array[j][i]
         to_save_image.save(self.path_without_ext + '-colored.png')
+        print("*** All special dots was found ***")
         return all_spec_dots
 
 
@@ -501,29 +502,31 @@ class Recognition:
             curr_fingerprint = pickle.load(fp)
         max_math_percent = 0
         index_of_max_match = 0
-        for i in range(len(all_files_db)):
-            total_dots_count = min(len(curr_fingerprint), len(all_files_db[i]))
+        all_compare_percent = []
+        for fp in all_files_db:
             count_of_true_dots = 0
-            for j in range(total_dots_count):
-                if abs(curr_fingerprint[j][0] - all_files_db[i][j][0]) <= 0.016\
-                    and abs(curr_fingerprint[j][1] -
-                        all_files_db[i][j][1]) <= 0.016:
-                    count_of_true_dots += 1
+            marked_dots_of_curr_arr = []
+            marked_dots_of_another = []
+            total_dots_count = min(len(fp), len(curr_fingerprint))
+            for dot in fp:
+                if dot not in marked_dots_of_another:
+                    for curr_dot in curr_fingerprint:
+                        if curr_dot not in marked_dots_of_curr_arr:
+                            if abs(dot[0] - curr_dot[0]) <= 0.0016 and \
+                                    abs(dot[1] - curr_dot[1]) <= 0.0016:
+                                marked_dots_of_another.append(dot)
+                                marked_dots_of_curr_arr.append(curr_dot)
+                                count_of_true_dots += 1
             percent = float(count_of_true_dots / total_dots_count) * 100
-            if percent >= 60:
-                print("Recognition algorithm finished")
-                print("Curr - {}".format(self.path_without_ext))
-                print("Found - {}".format(self.path_without_ext[:-1] +\
-                                          str(i + 1)))
-                print("Percent - {}".format(percent))
-                return "This is the fingerprint with number - {}".format(i + 1)
-            if max_math_percent <= percent:
-                max_math_percent = percent
-                index_of_max_match = i
-
-        print("Didn't find anything, the highest mark was {0},"
-              " with example - {1}".format(str(max_math_percent),
-                                           str(index_of_max_match)))
+            all_compare_percent.append(percent)
+        max_percent = max(all_compare_percent)
+        index_of_max_percent = all_compare_percent.index(max_percent) + 1
+        print("Recognition algorithm finished")
+        print("Curr - {}".format(self.path_without_ext))
+        print("Highest percent of matching - {}".format(max_percent))
+        if max_percent >= 55:
+            return "This is the fingerprint with number - " \
+                       "{}".format(index_of_max_percent)
         return "Sorry, we didn't match anything :("
 
 # Another method of fingerprint recognition algorithms
